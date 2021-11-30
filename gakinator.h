@@ -12,6 +12,13 @@ enum gAkinator_Node_mode {
     gAkinator_Node_mode_CNT,            //TODO think if it is appropriate
 };
 
+static const char gAkinator_Node_modeDescribtion[gAkinator_Node_mode_CNT][MAX_LINE_LEN] = {
+        "none",
+        "question",
+        "answer",
+        "unknown",
+    };
+
 struct gAkinator_Node
 {
     gAkinator_Node_mode mode;
@@ -20,47 +27,81 @@ struct gAkinator_Node
 } typedef gAkinator_Node;
 
 typedef gAkinator_Node GTREE_TYPE;
-#define GTREE_PRINTF_CODE ""
 
 #include "gtree.h"
 
-bool gTree_storeData(gAkinator_Node data, size_t level, FILE *out)         //TODO
+
+bool gTree_storeData(gAkinator_Node data, size_t level, FILE *out)  
 {
     for (size_t i = 0; i < level; ++i)
         fprintf(out, "\t");
     fprintf(out, "mode=%d\n", data.mode);
     for (size_t i = 0; i < level; ++i)
         fprintf(out, "\t");
-    fprintf(out, "question=\"%s\"\n", data.question);
+    fprintf(out, "question=%s\n", data.question);
     for (size_t i = 0; i < level; ++i)
         fprintf(out, "\t");
-    fprintf(out, "answer=\"%s\"\n", data.answer);
+    fprintf(out, "answer=%s\n", data.answer);
 
     return 0;
 }
 
-bool gTree_restoreData(gAkinator_Node *data, FILE *in)                       //TODO
+void restoreDataLexer(gAkinator_Node *data, char *buffer)
+{
+    char *iter = buffer;
+    while (isspace(*iter))
+        ++iter;
+
+    fprintf(stderr, "scanned buffer = #%s#\n", iter);
+    if (!strncmp(iter, "mode=", 5)) {
+        fprintf(stderr, "mode scaned!\n");
+        iter += 5;
+        sscanf(iter, "%d", &data->mode);
+    } else if (!strncmp(iter, "question=", 9)) {
+        fprintf(stderr, "question scaned!\n");
+        iter += 9;
+        while (isspace(*iter))
+            ++iter;
+        strcpy(data->question, iter);
+        data->mode = gAkinator_Node_mode_question;
+    } else if (!strncmp(iter, "answer=", 7)) {
+        fprintf(stderr, "answer scaned!\n");
+        iter += 7;
+        while (isspace(*iter))
+            ++iter;
+        strcpy(data->answer, iter);
+        data->mode = gAkinator_Node_mode_answer;
+    }
+    fprintf(stderr, "end of buffer scan\n", iter);
+}
+
+bool gTree_restoreData(gAkinator_Node *data, FILE *in)                      
 {
     char buffer[MAX_LINE_LEN] = "";
-
-    if (getline(buffer, MAX_LINE_LEN, in))
-        return 1;
-    if (sscanf(buffer, "mode= %d", &data->mode) != 1)
-        return 1;
-
-    fprintf(stderr, "Successfull data read!\n");
-    if (getline(buffer, MAX_LINE_LEN, in))
-        return 1;
-    if (sscanf(buffer, "question=\" %s \"", &data->question) != 1)
-        return 1;
-
-    if (getline(buffer, MAX_LINE_LEN, in))
-        return 1;
-    if (sscanf(buffer, "answer=\" %s \"", &data->answer) != 1)
-        return 1;
-    
-    return 0;
+    do {
+        if (getline(buffer, MAX_LINE_LEN, in))
+            return 1;
+        restoreDataLexer(data, buffer);
+   } while (!consistsOnly(buffer, "]") && !ferror(in) && !feof(in)); 
+   return 0;
 }
+
+bool gTree_printData(gAkinator_Node data, FILE *out)
+{
+    if (data.mode >= gAkinator_Node_mode_CNT || data.mode < 0)
+        data.mode = gAkinator_Node_mode_unknown;
+    fprintf(out, "{mode | %d (%s)}", data.mode, gAkinator_Node_modeDescribtion[data.mode]);
+    switch (data.mode) {
+        case (gAkinator_Node_mode_question): 
+            fprintf(out, "| {question | %s}", data.question);
+            break;
+        case (gAkinator_Node_mode_answer): 
+            fprintf(out, "| {answer | %s}", data.answer);
+            break;
+    }
+    return 0;
+}   
+
 
 enum gAkinator_status {
     gAkinator_status_OK = 0,
