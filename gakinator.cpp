@@ -10,7 +10,8 @@ int main()
 
     gTree_dumpPoolGraphViz(&akinator->tree, stdout);
 
-    gAkinator_game(akinator);
+    gAkinator_definition(akinator, 21);
+    // gAkinator_game(akinator);
 
     gAkinator_dtor(akinator);
 }

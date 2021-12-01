@@ -77,21 +77,6 @@
             ]
             {
                 [
-                    question=Successfully?
-                ]
-                {
-                    [
-                        answer=Navalny
-                    ]
-                }
-                {
-                    [
-                        answer=Skripal
-                    ]
-                }
-            }   
-            {
-                [
                     question=Mr.President?
                 ]
                 {
@@ -105,7 +90,22 @@
                     ]
                 }
             }
-        }
+            {
+                [
+                    question=Successfully?
+                ]
+                {
+                    [
+                        answer=Navalny
+                    ]
+                }
+                {
+                    [
+                        answer=Skripal
+                    ]
+                }
+            }   
+       }
         {
             [
                 question=Such a variaty... Runaway?
