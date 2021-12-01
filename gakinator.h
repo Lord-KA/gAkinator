@@ -2,14 +2,14 @@
 
 #include <stdio.h>
 
-static const size_t MAX_LINE_LEN = 100;
+static const size_t MAX_LINE_LEN = 1000;
 
 enum gAkinator_Node_mode {
     gAkinator_Node_mode_none, 
     gAkinator_Node_mode_question,
     gAkinator_Node_mode_answer,
     gAkinator_Node_mode_unknown,
-    gAkinator_Node_mode_CNT,            //TODO think if it is appropriate
+    gAkinator_Node_mode_CNT,            
 };
 
 static const char gAkinator_Node_modeDescribtion[gAkinator_Node_mode_CNT][MAX_LINE_LEN] = {
@@ -107,6 +107,7 @@ enum gAkinator_status {
     gAkinator_status_OK = 0,
     gAkinator_status_BadStructPtr,
     gAkinator_status_TreeErr,
+    gAkinator_status_ObjPoolErr,
     gAkinator_status_FileErr,
     gAkinator_status_CNT,
 };
@@ -115,6 +116,7 @@ static const char gAkinator_statusMsg[gAkinator_status_CNT][MAX_LINE_LEN] = {
         "OK",
         "Bad structure pointer provided",
         "Error in gTree",
+        "Error in gObjPool",
         "Error in file IO",
     };
 
@@ -124,9 +126,18 @@ static const char gAkinator_statusMsg[gAkinator_status_CNT][MAX_LINE_LEN] = {
 #define GAKINATOR_ASSERT_LOG(expr, errCode) ASSERT_LOG(expr, errCode, gAkinator_statusMsg[errCode], NULL)
 #endif
 
-#define GAKINATOR_CHECK_SELF_PTR(ptr) ASSERT_LOG(gPtrValid(ptr), gAkinator_status_BadStructPtr, \
+#define GAKINATOR_CHECK_SELF_PTR(ptr) ASSERT_LOG(gPtrValid(ptr), gAkinator_status_BadStructPtr,     \
                                                  gAkinator_statusMsg[gAkinator_status_BadStructPtr], \
                                                  stderr)
+
+#define GAKINATOR_NODE_BY_ID(id) ({                                                        \
+    gTree_Node *node = NULL;                                                                \
+    GAKINATOR_ASSERT_LOG(gObjPool_get(&akinator->tree.pool, id, &node) == gObjPool_status_OK,  \
+                            gAkinator_status_ObjPoolErr);                                     \
+    assert(gPtrValid(node));\
+    node;                                                                                      \
+})                                                                   
+
 
 struct gAkinator {
     gTree tree;
@@ -165,3 +176,82 @@ gAkinator_status gAkinator_dtor(gAkinator *akinator)
 
     return gAkinator_status_OK;
 }
+
+bool gAkinator_strIsYes(char *buffer) 
+{
+   if (!strSkpCmp(buffer, "Yes", 1))
+       return 1;
+   if (!strSkpCmp(buffer, "YES", 1))
+       return 1;
+   if (!strSkpCmp(buffer, "yes", 1))
+       return 1;
+   if (!strSkpCmp(buffer, "Y",   1))
+       return 1;
+   if (!strSkpCmp(buffer, "y",   1))
+       return 1;
+   return 0;
+}
+
+bool gAkinator_strIsNo(char *buffer) 
+{
+   if (!strSkpCmp(buffer, "No", 1))
+       return 1;
+   if (!strSkpCmp(buffer, "NO", 1))
+       return 1;
+   if (!strSkpCmp(buffer, "no", 1))
+       return 1;
+   if (!strSkpCmp(buffer, "N",  1))
+       return 1;
+   if (!strSkpCmp(buffer, "n",  1))
+       return 1;
+   return 0;
+}
+
+gAkinator_status gAkinator_game(gAkinator *akinator) 
+{
+    size_t nodeId = akinator->tree.root;
+    gTree_Node *node = NULL;
+    FILE *out = stdout;
+    while (nodeId != -1) {
+        node = GAKINATOR_NODE_BY_ID(nodeId);
+        if (node->data.mode == gAkinator_Node_mode_question) {
+            char answer[MAX_LINE_LEN] = "";
+            fprintf(out, "%s (y/n)\n", node->data.question);
+            scanf("%s", answer);
+            if (gAkinator_strIsNo(answer)) {
+                nodeId = node->child;
+            } else if (gAkinator_strIsYes(answer)) {
+                nodeId = node->child;
+                if (nodeId != -1)
+                    nodeId = GAKINATOR_NODE_BY_ID(nodeId)->sibling;
+            } else {
+                fprintf(out, "Unknown option, please try again (later?)\n");
+            }
+        }
+        else if (node->data.mode == gAkinator_Node_mode_answer) {
+            fprintf(out, "The character is %s (y/n)?\n", node->data.answer);
+            char answer[MAX_LINE_LEN] = "";
+            scanf("%s", answer);    
+            if (gAkinator_strIsNo(answer)) {
+                fprintf(out, "We don't know the character, what a shame! But you can add your character right here\n");                //TODO add answer addition mode
+                fprintf(stderr, "WARNING: Feature not implemented yet!\n");
+                goto finish;
+            } else if (gAkinator_strIsYes(answer)) {
+                fprintf(out, "Great!\nIf you've enjoyed the game, you can by me a coffee\n");        //TODO add coffee buying option
+                goto finish;
+            } else {
+                fprintf(out, "Unknown option, please try again (later?)\n");
+            }
+        } else {
+            nodeId = -1;
+        }
+    }
+    fprintf(out, "We don't know the character, what a shame! But you can add your character right here\n");                //TODO add answer addition mode here too
+    fprintf(stderr, "WARNING: Feature not implemented yet!\n");
+
+finish:
+
+    return gAkinator_status_OK;
+}
+
+gAkinator_status gAkinator_definition()

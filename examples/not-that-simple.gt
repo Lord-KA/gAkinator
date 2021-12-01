@@ -1,0 +1,135 @@
+{
+    [
+        question=Is he from Russia?
+    ]
+    {
+        [
+            question=Is he extra-rich
+        ]
+        {
+            [
+                question=Is he just rich
+            ]
+            {
+                [
+                    question=A poor guy, are you serious? Is he at least handsome?
+                ]
+                {
+                    [
+                        answer=Stephen Hawking? Otherwise I don't know why you are interested in the man.
+                    ]
+                }
+                {
+                    [
+                        answer=Kevin Spacey?
+                    ]
+                }
+            }
+            {
+                [
+                    question=An actor?
+                ] 
+                {
+                    [
+                        question=Mr.President?
+                    ]
+                    {
+                        [
+                            answer=             //TODO
+                        ]   
+                    }
+                    {
+                        [
+                            answer=Sir Zelensky
+                        ]
+                    }
+                }
+                {
+                    [
+                        answer=Definetly Keanu Reeves
+                    ]
+                }
+            }
+        }
+        {
+            [
+                question=Her Majesty?   
+            ]
+            {
+                [
+                    answer=How is that, Elon Mask?
+                ]
+            }
+            {
+                [
+                    answer=Margrethe II of Denmark
+                ]
+            }
+        }
+    }
+    {
+        [
+            question=Oligarch?
+        ]
+        {
+            [
+                question=Poisoned?
+            ]
+            {
+                [
+                    question=Successfully?
+                ]
+                {
+                    [
+                        answer=Navalny
+                    ]
+                }
+                {
+                    [
+                        answer=Skripal
+                    ]
+                }
+            }   
+            {
+                [
+                    question=Mr.President?
+                ]
+                {
+                    [
+                        answer=Nalivkin
+                    ]
+                }
+                {
+                    [
+                        answer=Yeltsin
+                    ]
+                }
+            }
+        }
+        {
+            [
+                question=Such a variaty... Runaway?
+            ]
+            {
+                [
+                    answer=Prigojin
+                ]
+            }
+            {
+                [
+                    question=Really hates Putin?
+                ]
+                {
+                    [
+                        answer=Chichvarkin
+                    ]
+                }
+                {
+                    [
+                        answer=Hodorkovsky
+                    ]
+                }
+            }
+        }
+    }
+}

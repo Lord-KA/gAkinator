@@ -29,7 +29,7 @@ endif()
 FetchContent_Declare(
   gutils
   GIT_REPOSITORY https://github.com/lord-ka/gutils.git
-  GIT_TAG        release-1.0.3
+  # GIT_TAG        release-1.0.3                            #TODO add GIT_TAG after gTree stabilizes
 )
 
 FetchContent_GetProperties(gutils)

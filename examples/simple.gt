@@ -1,0 +1,15 @@
+{
+    [
+        question=Is that a guy?
+    ]
+    {
+        [
+            answer=Nope
+        ]
+    }
+    {
+        [
+            answer=Yes
+        ]
+    }
+}

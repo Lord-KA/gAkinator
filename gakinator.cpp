@@ -4,11 +4,13 @@ int main()
 {
     gAkinator akinatorStruct;
     gAkinator *akinator = &akinatorStruct;
-    FILE *in = fopen("storage.gt", "r");
+    FILE *in = fopen("../examples/not-that-simple.gt", "r");
     gAkinator_ctor(akinator, stderr, in);
     fclose(in);
 
     gTree_dumpPoolGraphViz(&akinator->tree, stdout);
+
+    gAkinator_game(akinator);
 
     gAkinator_dtor(akinator);
 }
