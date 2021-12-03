@@ -118,6 +118,8 @@ enum gAkinator_status {
     gAkinator_status_ObjPoolErr,
     gAkinator_status_FileErr,
     gAkinator_status_BadPtr,
+    gAkinator_status_BadId,
+    gAkinator_status_BadInput,
     gAkinator_status_CNT,
 };
 
@@ -128,6 +130,8 @@ static const char gAkinator_statusMsg[gAkinator_status_CNT][MAX_LINE_LEN] = {
         "Error in gObjPool",
         "Error in file IO",
         "Bad pointer provided",
+        "Bad node id provided",
+        "WARNING: bad input provided",
     };
 
 
@@ -149,6 +153,7 @@ static const char gAkinator_statusMsg[gAkinator_status_CNT][MAX_LINE_LEN] = {
     node;                                                                                         \
 })                                                                   
 
+static const gAkinator_Node FAKE_DATA = {};
 
 struct gAkinator {
     gTree tree;
@@ -220,6 +225,8 @@ bool gAkinator_strIsNo(char *buffer)
     return 0;
 }
 
+gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gTree_Node *parent);         //TODO remove 
+
 gAkinator_status gAkinator_game(gAkinator *akinator) 
 {
     GAKINATOR_CHECK_SELF_PTR(akinator);
@@ -227,6 +234,7 @@ gAkinator_status gAkinator_game(gAkinator *akinator)
     size_t nodeId = akinator->tree.root;
     gTree_Node *node = NULL;
     FILE *out = stdout;
+    size_t parentId = -1;
     while (nodeId != -1) {
         node = GAKINATOR_NODE_BY_ID(nodeId);
         if (node->data.mode == gAkinator_Node_mode_question) {
@@ -249,7 +257,7 @@ gAkinator_status gAkinator_game(gAkinator *akinator)
             scanf("%s", answer);    
             if (gAkinator_strIsNo(answer)) {
                 fprintf(out, "We don't know the character, what a shame! But you can add your character right here\n");                //TODO add answer addition mode
-                fprintf(stderr, "WARNING: Feature not implemented yet!\n");
+                gAkinator_addNew(akinator, nodeId, node);
                 goto finish;
             } else if (gAkinator_strIsYes(answer)) {
                 fprintf(out, "Great!\nIf you've enjoyed the game, you can by me a coffee\n");        //TODO add coffee buying option
@@ -259,13 +267,13 @@ gAkinator_status gAkinator_game(gAkinator *akinator)
             }
         } else {
             fprintf(out, "We don't know the character, what a shame! But you can add your character right here\n");                //TODO add answer addition mode
-            fprintf(stderr, "WARNING: Feature not implemented yet!\n");
+            gAkinator_addNew(akinator, nodeId, node);
 
             goto finish;
         }
     }
     fprintf(out, "We don't know the character, what a shame! But you can add your character right here\n");                //TODO add answer addition mode
-    fprintf(stderr, "WARNING: Feature not implemented yet!\n");
+    gAkinator_addNew(akinator, nodeId, node);
 
 finish:
 
@@ -275,7 +283,7 @@ finish:
 gAkinator_status gAkinator_definition(const gAkinator *akinator, size_t nodeId) 
 {
     GAKINATOR_CHECK_SELF_PTR(akinator);
-    ASSERT_LOG(nodeId != -1, gAkinator_status_BadId);
+    GAKINATOR_ASSERT_LOG(nodeId != -1, gAkinator_status_BadId);
 
     FILE *out = stdout;
     gTree_Node *node = GAKINATOR_NODE_BY_ID(nodeId);
@@ -288,9 +296,9 @@ gAkinator_status gAkinator_definition(const gAkinator *akinator, size_t nodeId)
         gTree_Node *node = GAKINATOR_NODE_BY_ID(nodeId);
         fprintf(out, "%s", node->data.question);
         if (node->child == childId)
-            fprintf(out, " : Nope!\n");
+            fprintf(out, "\t: Nope!\n");
         else 
-            fprintf(out, " : Yep! \n");
+            fprintf(out, "\t: Yep! \n");
         childId = nodeId;
         nodeId  = node->parent;
     }
@@ -298,25 +306,110 @@ gAkinator_status gAkinator_definition(const gAkinator *akinator, size_t nodeId)
     return gAkinator_status_OK;
 }
 
-gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gAkinator_Node *parent)       //TODO
+gAkinator_status gAkinator_addNewQuestion(gAkinator *akinator, size_t &nodeId, size_t &parentId, char question[], char answer[])
+{
+    FILE *out = stdout;
+    gTree_Node *parent = NULL;
+    gTree_Node *node   = NULL;
+    if (nodeId != -1) {
+        node = GAKINATOR_NODE_BY_ID(nodeId);
+        if (node->data.mode == gAkinator_Node_mode_none || node->data.mode == gAkinator_Node_mode_unknown) {
+            node->data.mode = gAkinator_Node_mode_question;
+            strcpy(node->data.question, question);
+            size_t childId = -1;
+            gTree_Node *child = NULL;
+            if (gAkinator_strIsYes(answer)) {
+                GAKINATOR_ASSERT_LOG(gTree_addChild(&akinator->tree, nodeId, &childId, node->data) == gTree_status_OK,
+                                        gAkinator_status_TreeErr);
+            } else if (gAkinator_strIsNo(answer))  {
+                size_t siblingId = -1;
+                gTree_Node *sibling = NULL;
+                GAKINATOR_ASSERT_LOG(gTree_addChild(&akinator->tree, nodeId, &siblingId, node->data) == gTree_status_OK,
+                                        gAkinator_status_TreeErr);
+                GAKINATOR_ASSERT_LOG(gTree_addChild(&akinator->tree, nodeId, &childId,   node->data) == gTree_status_OK,
+                                        gAkinator_status_TreeErr);
+                sibling = GAKINATOR_NODE_BY_ID(siblingId);
+                sibling->data.mode = gAkinator_Node_mode_none;
+            } else {
+                fprintf(out, "Bad answer, please try again\n");
+                return gAkinator_status_BadInput;
+            }
+            parentId = nodeId;
+            nodeId   = childId;
+            gAkinator_addNewQuestion(akinator, nodeId, parentId, question, answer);
+        } else {
+            parentId = nodeId;
+            nodeId   = -1;
+            gAkinator_addNewQuestion(akinator, nodeId, parentId, question, answer);
+        }
+    } else {
+        parent = GAKINATOR_NODE_BY_ID(parentId);
+        if (parent->child == -1) {
+            if (gAkinator_strIsNo(answer)) {
+                GAKINATOR_ASSERT_LOG(gTree_addChild(&akinator->tree, parentId, &nodeId, FAKE_DATA) == gTree_status_OK,
+                                        gAkinator_status_TreeErr);
+            } else if (gAkinator_strIsYes(answer)) {
+                size_t siblingId = -1;
+                gTree_Node *sibling = NULL;
+                GAKINATOR_ASSERT_LOG(gTree_addChild(&akinator->tree, parentId, &siblingId, FAKE_DATA) == gTree_status_OK,
+                                        gAkinator_status_TreeErr);
+                sibling = GAKINATOR_NODE_BY_ID(siblingId);
+                sibling->data.mode     = gAkinator_Node_mode_none;
+
+                GAKINATOR_ASSERT_LOG(gTree_addChild(&akinator->tree, parentId, &nodeId,    FAKE_DATA) == gTree_status_OK,
+                                        gAkinator_status_TreeErr);
+            } else {
+                fprintf(out, "Bad answer, please try again\n");
+                return gAkinator_status_BadInput;
+            }
+        } else {
+            GAKINATOR_ASSERT_LOG(gTree_addChild(&akinator->tree, parentId, &nodeId, FAKE_DATA) == gTree_status_OK,
+                                    gAkinator_status_TreeErr);
+        }
+        node = GAKINATOR_NODE_BY_ID(nodeId);
+        node->data.mode     = gAkinator_Node_mode_question;
+        strcpy(node->data.question, question);
+        parentId = nodeId;
+        nodeId   = -1;
+    }
+
+    return gAkinator_status_OK;
+}
+
+gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gTree_Node *parent)       //TODO
 {
     GAKINATOR_CHECK_SELF_PTR(akinator);
-    ASSERT_LOG(gPtrValid(parent), gAkinator_status_BadPtr);
-    ASSERT_LOG(nodeId != -1, gAkinator_status_BadId);
+    GAKINATOR_ASSERT_LOG(gPtrValid(parent), gAkinator_status_BadPtr);
 
-    FILE *out = stdout;
-    fpritntf(out, "Write you characters name:\n");
-    bool isYesChild = (parent->child == nodeId);
+    size_t parentId = -1;
+    GAKINATOR_ASSERT_LOG(gObjPool_getId(&akinator->tree.pool, parent, &parentId) == gObjPool_status_OK, gAkinator_status_ObjPoolErr);
+    FILE *out = stderr;
+    fprintf(out, "Write you characters name:\n");
 
     char name[MAX_LINE_LEN] = "";
+    getline(name, MAX_LINE_LEN, stdin);         //TODO 
     getline(name, MAX_LINE_LEN, stdin);
     
     fprintf(out, "Do you want to add more questions? (y/n)\n");
-    char answer[MAX_LINE_LEN] = "";
-    scanf("%s", answer);
-    if (gAkinator_strIsNo(answer)) {
-        
+    char confirmation[MAX_LINE_LEN] = "";
+    scanf("%s", confirmation);
+    while (gAkinator_strIsYes(confirmation)) {
+        char question[MAX_LINE_LEN] = "";
+        char   answer[MAX_LINE_LEN] = "";
+        fprintf(out, "Your question:\n");
+        getline(question, MAX_LINE_LEN, stdin);
+        getline(question, MAX_LINE_LEN, stdin);
+        fprintf(out, "Your answer (y/n):\n");
+        getline(answer,   MAX_LINE_LEN, stdin);
+
+        fprintf(stderr, "question = #%s#\nanswer = #%s#\n", question, answer);
+
+        gAkinator_addNewQuestion(akinator, nodeId, parentId, question, answer);
+
+        fprintf(out, "Add another question? (y/n)\n");
+        scanf("%s", confirmation);
     }
+    
 
     return gAkinator_status_OK;
 }
@@ -324,8 +417,8 @@ gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gAkinator_
 gAkinator_status gAkinator_comp(gAkinator *akinator, size_t oneNodeId, size_t otherNodeId)          //TODO
 {
     GAKINATOR_CHECK_SELF_PTR(akinator);
-    ASSERT_LOG(oneNodeId   != -1, gAkinator_status_BadId);
-    ASSERT_LOG(otherNodeId != -1, gAkinator_status_BadId);
+    GAKINATOR_ASSERT_LOG(oneNodeId   != -1, gAkinator_status_BadId);
+    GAKINATOR_ASSERT_LOG(otherNodeId != -1, gAkinator_status_BadId);
 
     return gAkinator_status_OK;
 }

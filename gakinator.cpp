@@ -8,10 +8,13 @@ int main()
     gAkinator_ctor(akinator, stderr, in);
     fclose(in);
 
-    gTree_dumpPoolGraphViz(&akinator->tree, stdout);
 
-    gAkinator_definition(akinator, 21);
-    // gAkinator_game(akinator);
+    // gAkinator_definition(akinator, 21);
+    gAkinator_game(akinator);
+
+    FILE *out = fopen("dump.gv", "w");
+    gTree_dumpPoolGraphViz(&akinator->tree, out);
+    fclose(out);
 
     gAkinator_dtor(akinator);
 }
