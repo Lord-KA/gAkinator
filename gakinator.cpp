@@ -4,6 +4,10 @@ int main()
 {
     gAkinator akinatorStruct;
     gAkinator *akinator = &akinatorStruct;
+    #ifdef EXTRA_VERBOSE
+        fpritnf(stderr, "EXTRA_VERBOSE is defined!!!!\n");
+    #endif
+    // FILE *in = fopen("../examples/node-adding.gt", "r");
     FILE *in = fopen("../examples/not-that-simple.gt", "r");
     gAkinator_ctor(akinator, stderr, in);
     fclose(in);
