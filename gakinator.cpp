@@ -14,7 +14,8 @@ int main()
 
 
     // gAkinator_definition(akinator, 21);
-    gAkinator_game(akinator);
+    // gAkinator_game(akinator);
+    gAkinator_comp(akinator, 5, 4);
 
     FILE *out = fopen("dump.gv", "w");
     gTree_dumpPoolGraphViz(&akinator->tree, out);

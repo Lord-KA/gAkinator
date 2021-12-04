@@ -376,7 +376,7 @@ finish:
     return gAkinator_status_OK;
 }
 
-gAkinator_status gAkinator_definition(const gAkinator *akinator, size_t nodeId) 
+gAkinator_status gAkinator_definition(const gAkinator *akinator, size_t nodeId)
 {
     GAKINATOR_CHECK_SELF_PTR(akinator);
     GAKINATOR_ASSERT_LOG(nodeId != -1, gAkinator_status_BadId);
@@ -402,13 +402,51 @@ gAkinator_status gAkinator_definition(const gAkinator *akinator, size_t nodeId)
     return gAkinator_status_OK;
 }
 
-gAkinator_status gAkinator_comp(gAkinator *akinator, size_t oneNodeId, size_t otherNodeId)          //TODO
+gAkinator_status gAkinator_comp(gAkinator *akinator, size_t oneNodeId, size_t otherNodeId)
 {
     GAKINATOR_CHECK_SELF_PTR(akinator);
-    GAKINATOR_ASSERT_LOG(oneNodeId   != -1, gAkinator_status_BadId);
+    GAKINATOR_ASSERT_LOG(  oneNodeId != -1, gAkinator_status_BadId);
     GAKINATOR_ASSERT_LOG(otherNodeId != -1, gAkinator_status_BadId);
 
-    fprintf(stderr, "WARNING: the feature has not been implemented yet!\n");
+    FILE *out = stdout;
+
+    size_t   oneIterId = oneNodeId;
+    size_t   oneParentId = -1;
+    size_t otherParentId = -1;
+    bool   foundFirstMutual = false;
+
+    while (oneIterId != akinator->tree.root) {
+        gTree_Node *oneNode = GAKINATOR_NODE_BY_ID(oneIterId);
+        size_t otherIterId = otherNodeId;
+        while (otherIterId != oneIterId && otherIterId != akinator->tree.root) {
+            gTree_Node *otherNode = GAKINATOR_NODE_BY_ID(otherIterId);
+            otherParentId = otherIterId;
+            otherIterId = otherNode->parent;
+        }
+        if (otherIterId != akinator->tree.root) {
+            if (!foundFirstMutual) {
+                fprintf(out, "The difference between %s and %s lies in question:\n%s?\n",
+                                GAKINATOR_NODE_BY_ID(  oneNodeId)->data.answer,
+                                GAKINATOR_NODE_BY_ID(otherNodeId)->data.answer,
+                                GAKINATOR_NODE_BY_ID(  oneIterId)->data.question);
+                foundFirstMutual = true;
+            } else {
+                char answer[MAX_LINE_LEN] = "";
+                if (GAKINATOR_NODE_BY_ID(oneIterId)->child == oneParentId)
+                    strcpy(answer, "NO");
+                else 
+                    strcpy(answer, "YES");
+
+                fprintf(out, "%s and %s are the same %s for the question:\n%s?\n",
+                                GAKINATOR_NODE_BY_ID(  oneNodeId)->data.answer,
+                                GAKINATOR_NODE_BY_ID(otherNodeId)->data.answer,
+                                answer,
+                                GAKINATOR_NODE_BY_ID(  oneIterId)->data.question);
+            }
+        }
+        oneParentId = oneIterId;
+        oneIterId   = GAKINATOR_NODE_BY_ID(oneIterId)->parent; 
+    }
 
     return gAkinator_status_OK;
 }
