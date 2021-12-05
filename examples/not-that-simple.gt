@@ -16,12 +16,12 @@
                 ]
                 {
                     [
-                        answer=Stephen Hawking? Otherwise I don't know why you are interested in the man.
+                        answer=Stephen Hawking
                     ]
                 }
                 {
                     [
-                        answer=Kevin Spacey?
+                        answer=Kevin Spacey
                     ]
                 }
             }
@@ -35,7 +35,7 @@
                     ]
                     {
                         [
-                            answer=             //TODO
+                            answer=Santa Clause
                         ]   
                     }
                     {
@@ -57,7 +57,7 @@
             ]
             {
                 [
-                    answer=How is that, Elon Mask?
+                    answer=How is that, Elon Mask
                 ]
             }
             {

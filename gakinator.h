@@ -203,38 +203,6 @@ gAkinator_status gAkinator_dtor(gAkinator *akinator)
     return gAkinator_status_OK;
 }
 
-bool gAkinator_strIsYes(char *buffer) 
-{
-    assert(gPtrValid(buffer));
-    if (!strSkpCmp(buffer, "Yes", 1))
-        return 1;
-    if (!strSkpCmp(buffer, "YES", 1))
-        return 1;
-    if (!strSkpCmp(buffer, "yes", 1))
-        return 1;
-    if (!strSkpCmp(buffer, "Y",   1))
-        return 1;
-    if (!strSkpCmp(buffer, "y",   1))
-        return 1;
-    return 0;
-}
-
-bool gAkinator_strIsNo(char *buffer) 
-{
-    assert(gPtrValid(buffer));
-    if (!strSkpCmp(buffer, "No", 1))
-        return 1;
-    if (!strSkpCmp(buffer, "NO", 1))
-        return 1;
-    if (!strSkpCmp(buffer, "no", 1))
-        return 1;
-    if (!strSkpCmp(buffer, "N",  1))
-        return 1;
-    if (!strSkpCmp(buffer, "n",  1))
-        return 1;
-    return 0;
-}
-
 gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gTree_Node *parent)
 {
     GAKINATOR_CHECK_SELF_PTR(akinator);
@@ -248,11 +216,11 @@ gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gTree_Node
     do {
         fprintf(out, "Do you want to add a character (y/n)?\n");
         assert(!getline(answer, MAX_LINE_LEN, stdin));
-        if (gAkinator_strIsNo(answer))
+        if (strIsNo(answer))
             return gAkinator_status_OK;
-        if (!gAkinator_strIsYes(answer))
+        if (!strIsYes(answer))
             fprintf(out, "Bad answer, please try again\n");
-    } while (!gAkinator_strIsYes(answer));
+    } while (!strIsYes(answer));
     fprintf(out, "Write you characters name:\n");
 
     char name[MAX_LINE_LEN] = "";
@@ -267,7 +235,7 @@ gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gTree_Node
             assert(!getline(question, MAX_LINE_LEN, stdin));
             fprintf(out, "Whould you say it about %s (y/n):\n", name);
             assert(!getline(answer,   MAX_LINE_LEN, stdin));
-            while (!gAkinator_strIsYes(answer) && !gAkinator_strIsNo(answer)) {
+            while (!strIsYes(answer) && !strIsNo(answer)) {
                 fprintf(out, "Bad answer, please try again\n");
                 fprintf(out, "Whould you say it about %s (y/n):\n", name);
                 assert(!getline(answer,   MAX_LINE_LEN, stdin));
@@ -285,10 +253,10 @@ gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gTree_Node
             node = GAKINATOR_NODE_BY_ID(nodeId);
             yChild->data.mode = gAkinator_Node_mode_answer;
             nChild->data.mode = gAkinator_Node_mode_answer;
-            if (gAkinator_strIsYes(answer)) {
+            if (strIsYes(answer)) {
                 strcpy(yChild->data.answer, name);             
                 strcpy(nChild->data.answer, node->data.answer);
-            } else if (gAkinator_strIsNo(answer)){
+            } else if (strIsNo(answer)){
                 strcpy(nChild->data.answer, name);             
                 strcpy(yChild->data.answer, node->data.answer);
             } else {
@@ -337,9 +305,9 @@ gAkinator_status gAkinator_game(gAkinator *akinator)
             char answer[MAX_LINE_LEN] = "";
             fprintf(out, "%s (y/n)\n", node->data.question);
             scanf("%s", answer);
-            if (gAkinator_strIsNo(answer)) {
+            if (strIsNo(answer)) {
                 nodeId = node->child;
-            } else if (gAkinator_strIsYes(answer)) {
+            } else if (strIsYes(answer)) {
                 nodeId = node->child;
                 if (nodeId != -1)
                     nodeId = GAKINATOR_NODE_BY_ID(nodeId)->sibling;
@@ -351,11 +319,11 @@ gAkinator_status gAkinator_game(gAkinator *akinator)
             fprintf(out, "The character is %s (y/n)?\n", node->data.answer);
             char answer[MAX_LINE_LEN] = "";
             scanf("%s", answer);    
-            if (gAkinator_strIsNo(answer)) {
+            if (strIsNo(answer)) {
                 fprintf(out, "We don't know the character, what a shame! But you can add your character right here\n");                
                 gAkinator_addNew(akinator, nodeId, node);
                 goto finish;
-            } else if (gAkinator_strIsYes(answer)) {
+            } else if (strIsYes(answer)) {
                 fprintf(out, "Great!\nIf you've enjoyed the game, you can by me a coffee\n");        //TODO add BTC wallet addres
                 goto finish;
             } else {
@@ -425,7 +393,7 @@ gAkinator_status gAkinator_comp(gAkinator *akinator, size_t oneNodeId, size_t ot
         }
         if (otherIterId != akinator->tree.root) {
             if (!foundFirstMutual) {
-                fprintf(out, "The difference between %s and %s lies in question:\n%s?\n",
+                fprintf(out, "The difference between %s and %s lies in question:\n%s\n",
                                 GAKINATOR_NODE_BY_ID(  oneNodeId)->data.answer,
                                 GAKINATOR_NODE_BY_ID(otherNodeId)->data.answer,
                                 GAKINATOR_NODE_BY_ID(  oneIterId)->data.question);
@@ -437,7 +405,7 @@ gAkinator_status gAkinator_comp(gAkinator *akinator, size_t oneNodeId, size_t ot
                 else 
                     strcpy(answer, "YES");
 
-                fprintf(out, "%s and %s are the same %s for the question:\n%s?\n",
+                fprintf(out, "%s and %s are the same %s for the question:\n%s\n",
                                 GAKINATOR_NODE_BY_ID(  oneNodeId)->data.answer,
                                 GAKINATOR_NODE_BY_ID(otherNodeId)->data.answer,
                                 answer,
