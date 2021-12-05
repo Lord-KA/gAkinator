@@ -215,7 +215,7 @@ gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gTree_Node
     char   answer[MAX_LINE_LEN] = "";
     do {
         fprintf(out, "Do you want to add a character (y/n)?\n");
-        assert(!getline(answer, MAX_LINE_LEN, stdin));
+        GAKINATOR_ASSERT_LOG(!getline(answer, MAX_LINE_LEN, stdin), gAkinator_status_BadInput);
         if (strIsNo(answer))
             return gAkinator_status_OK;
         if (!strIsYes(answer))
@@ -224,7 +224,7 @@ gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gTree_Node
     fprintf(out, "Write you characters name:\n");
 
     char name[MAX_LINE_LEN] = "";
-    assert(!getline(name, MAX_LINE_LEN, stdin));
+    GAKINATOR_ASSERT_LOG(!getline(name, MAX_LINE_LEN, stdin), gAkinator_status_BadInput);
  
     gTree_Node *node = NULL;
     if (nodeId != -1) {
@@ -232,13 +232,13 @@ gAkinator_status gAkinator_addNew(gAkinator *akinator, size_t nodeId, gTree_Node
         if (node->data.mode == gAkinator_Node_mode_answer) {
             fprintf(out, "How whould you differ %s from %s?\n", node->data.answer, name);
             fprintf(out, "Your question:\n");
-            assert(!getline(question, MAX_LINE_LEN, stdin));
+            GAKINATOR_ASSERT_LOG(!getline(question, MAX_LINE_LEN, stdin), gAkinator_status_BadInput);
             fprintf(out, "Whould you say it about %s (y/n):\n", name);
-            assert(!getline(answer,   MAX_LINE_LEN, stdin));
+            GAKINATOR_ASSERT_LOG(!getline(answer, MAX_LINE_LEN, stdin), gAkinator_status_BadInput);
             while (!strIsYes(answer) && !strIsNo(answer)) {
                 fprintf(out, "Bad answer, please try again\n");
                 fprintf(out, "Whould you say it about %s (y/n):\n", name);
-                assert(!getline(answer,   MAX_LINE_LEN, stdin));
+                GAKINATOR_ASSERT_LOG(!getline(answer, MAX_LINE_LEN, stdin), gAkinator_status_BadInput);
             }
 
             size_t yChildId = -1, nChildId = -1;

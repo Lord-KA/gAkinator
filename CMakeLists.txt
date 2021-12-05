@@ -29,7 +29,7 @@ endif()
 FetchContent_Declare(
   gutils
   GIT_REPOSITORY https://github.com/lord-ka/gutils.git
-  # GIT_TAG        release-1.0.3                            #TODO add GIT_TAG after gTree stabilizes
+  GIT_TAG        release-1.0.4
 )
 
 FetchContent_GetProperties(gutils)
@@ -51,7 +51,7 @@ endif()
 FetchContent_Declare(
   gtree
   GIT_REPOSITORY https://github.com/Lord-KA/gTree.git
-  # GIT_TAG        release-1.0.1                            #TODO add GIT_TAG after gTree stabilizes
+  GIT_TAG        release-1.0.2
 )
 if(NOT gtree_POPULATED)
   FetchContent_Populate(gtree)
