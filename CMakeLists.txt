@@ -41,7 +41,7 @@ endif()
 FetchContent_Declare(
   gobjpool
   GIT_REPOSITORY https://github.com/Lord-KA/gObjPool.git
-  GIT_TAG        release-1.0.1
+  GIT_TAG        release-1.0.2
 )
 if(NOT gobjpool_POPULATED)
   FetchContent_Populate(gobjpool)
@@ -51,7 +51,7 @@ endif()
 FetchContent_Declare(
   gtree
   GIT_REPOSITORY https://github.com/Lord-KA/gTree.git
-  GIT_TAG        release-1.0.2
+  GIT_TAG        release-1.0.3
 )
 if(NOT gtree_POPULATED)
   FetchContent_Populate(gtree)
