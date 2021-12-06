@@ -33,8 +33,8 @@ gAkinator_status gAkinator_interface_defn(gAkinator *akinator)
 gAkinator_status gAkinator_interface_show(gAkinator *akinator) 
 {
     FILE *out = fopen("graph.gv", "w");
-    if (gTree_dumpPoolGraphViz(&akinator->tree, out) != gTree_status_OK)
-        return gAkinator_status_TreeErr;
+    gAkinator_status status = gAkinator_dump(akinator, out);
+    GAKINATOR_ASSERT_LOG(status == gAkinator_status_OK, status);
     fclose(out);
     system("dot -Tpdf -ograph.pdf ./graph.gv && zathura ./graph.pdf 2> /dev/null");
     return gAkinator_status_OK;

@@ -156,11 +156,12 @@ static const char gAkinator_statusMsg[gAkinator_status_CNT][MAX_LINE_LEN] = {
                                                  stderr)
 
 #define GAKINATOR_NODE_BY_ID(id) ({                                                          \
-    gTree_Node *node = NULL;                                                                  \
-    GAKINATOR_ASSERT_LOG(gObjPool_get(&akinator->tree.pool, id, &node) == gObjPool_status_OK,  \
-                            gAkinator_status_ObjPoolErr);                                       \
-    assert(gPtrValid(node));                                                                     \
-    node;                                                                                         \
+    assert(id != -1);                                                                         \
+    gTree_Node *node = NULL;                                                                   \
+    GAKINATOR_ASSERT_LOG(gObjPool_get(&akinator->tree.pool, id, &node) == gObjPool_status_OK,   \
+                            gAkinator_status_ObjPoolErr);                                        \
+    assert(gPtrValid(node));                                                                      \
+    node;                                                                                          \
 })                                                                   
 
 static const gAkinator_Node FAKE_DATA = {};
@@ -415,6 +416,36 @@ gAkinator_status gAkinator_comp(gAkinator *akinator, size_t oneNodeId, size_t ot
         oneParentId = oneIterId;
         oneIterId   = GAKINATOR_NODE_BY_ID(oneIterId)->parent; 
     }
+
+    return gAkinator_status_OK;
+}
+
+gAkinator_status gAkinator_dump(gAkinator *akinator, FILE *out)
+{
+    GAKINATOR_CHECK_SELF_PTR(akinator);
+    GAKINATOR_ASSERT_LOG(gPtrValid(out), gAkinator_status_BadPtr);
+    gTree    *tree = &akinator->tree;
+    gObjPool *pool = &tree->pool;
+
+    fprintf(out, "digraph dilist {\n\tnode [shape=record]\n\tsubgraph cluster {\n");
+
+    for (size_t i = 0; i < pool->capacity; ++i) {
+        gTree_Node *node = &pool->data[i].val;
+        if (pool->data[i].allocated) {
+            fprintf(out,  "\t\tnode%lu [label=\"Node %lu\ | | {data | ", i, i);
+            gTree_printData(node->data, out);
+            fprintf(out, "}\"]\n");
+        }
+    }
+    fprintf(out, "\t}\n");
+
+    for (size_t i = 0; i < pool->capacity; ++i) {
+        gTree_Node *node = &pool->data[i].val;
+        if (pool->data[i].allocated && node->parent != -1) {
+            fprintf(out, "\tnode%lu -> node%lu\n", node->parent, i);
+        }
+    }
+    fprintf(out, "}\n");
 
     return gAkinator_status_OK;
 }
